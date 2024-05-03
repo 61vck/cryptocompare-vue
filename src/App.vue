@@ -74,7 +74,7 @@
           <div
             v-for="t in tickers"
             :key="t.name"
-            @click="sel = t"
+            @click="select(t)"
             :class="{ 'border-4': sel === t }"
             class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
           >
@@ -114,10 +114,12 @@
           {{ sel.name }} - USD
         </h3>
         <div class="flex items-end border-gray-600 border-b border-l h-64">
-          <div class="bg-purple-800 border w-10 h-24"></div>
-          <div class="bg-purple-800 border w-10 h-32"></div>
-          <div class="bg-purple-800 border w-10 h-48"></div>
-          <div class="bg-purple-800 border w-10 h-16"></div>
+          <div
+            v-for="(bar, idx) in normalizeGraph()"
+            :key="idx"
+            :style="{ height: `${bar}%` }"
+            class="bg-purple-800 border w-10"
+          ></div>
         </div>
         <button
           @click="sel = null"
@@ -160,6 +162,7 @@ export default {
       ticker: '',
       tickers: [],
       sel: null,
+      graph: [],
     };
   },
 
@@ -179,12 +182,29 @@ export default {
 
         this.tickers.find((t) => t.name === newTicker.name).price =
           data.USD > 1 ? data.USD.toFixed(2) : data.USD.toPrecision(2);
-      }, 3000);
+        if (this.sel?.name === newTicker.name) {
+          this.graph.push(data.USD);
+        }
+      }, 5000);
       this.ticker = '';
+    },
+
+    select(ticker) {
+      this.sel = ticker;
+      this.graph = [];
     },
 
     handleDelete(tickerToRemove) {
       this.tickers = this.tickers.filter((t) => t != tickerToRemove);
+    },
+
+    normalizeGraph() {
+      const maxValue = Math.max(...this.graph);
+      const minValue = Math.min(...this.graph);
+
+      return this.graph.map(
+        (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue),
+      );
     },
   },
 };
